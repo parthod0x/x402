@@ -191,9 +191,12 @@ A resource server intended to be reachable from a browser SHOULD:
   safelisted only for form and plain-text values, so a payment request with
   a JSON body triggers the preflight on `Content-Type` before any payment
   header is considered: omit it and the client never reaches the 402 at all;
-- name the v1 spellings `X-PAYMENT` and `X-PAYMENT-RESPONSE` alongside the v2
-  names in both lists, if it still serves v1 clients. A dual-version endpoint
-  that lists only one spelling fails the same way for the other version's
+- name the v1 spellings too, if it still serves v1 clients, each in the list
+  matching its direction: `X-PAYMENT` in `Access-Control-Allow-Headers`
+  beside `PAYMENT-SIGNATURE`, since the client sends it, and
+  `X-PAYMENT-RESPONSE` in `Access-Control-Expose-Headers` beside
+  `PAYMENT-RESPONSE`, since the server returns it. A dual-version endpoint
+  that names only one spelling fails the same way for the other version's
   clients;
 - answer the preflight `OPTIONS` without requiring payment, and send a
   non-trivial `Access-Control-Max-Age`. A priced resource otherwise pays a
