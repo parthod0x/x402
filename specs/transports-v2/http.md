@@ -169,6 +169,47 @@ The base64 response header decodes to:
 | `PAYMENT-SIGNATURE` | Client → Server | Base64-encoded `PaymentPayload` object |
 | `PAYMENT-RESPONSE` | Server → Client | Base64-encoded `SettlementResponse` object |
 
+### Browser clients
+
+None of the three headers above is CORS-safelisted. A cross-origin `fetch()`
+therefore cannot read `PAYMENT-REQUIRED` or `PAYMENT-RESPONSE` unless the
+response names them in `Access-Control-Expose-Headers`, and cannot send
+`PAYMENT-SIGNATURE` unless the preflight allows it.
+
+A resource server intended to be reachable from a browser SHOULD:
+
+- send `Access-Control-Allow-Origin` for the calling origin on the 402
+  itself. Without it the browser hides the whole response, and nothing else
+  in this list has any effect;
+- name `PAYMENT-REQUIRED` and `PAYMENT-RESPONSE` in
+  `Access-Control-Expose-Headers`, merged with any value already present
+  rather than replacing it. A value of `*` does not cover them on a
+  credentialed request;
+- name `PAYMENT-SIGNATURE` in `Access-Control-Allow-Headers`. A value of `*`
+  does not cover it on a credentialed request either, where `*` is read as a
+  literal header name;
+- name the v1 spellings `X-PAYMENT` and `X-PAYMENT-RESPONSE` alongside the v2
+  names in both lists, if it still serves v1 clients. A dual-version endpoint
+  that lists only one spelling fails the same way for the other version's
+  clients;
+- answer the preflight `OPTIONS` without requiring payment, and send a
+  non-trivial `Access-Control-Max-Age`. A priced resource otherwise pays a
+  preflight round trip on every cross-origin call;
+- send `Vary: Origin` if it reflects an origin rather than sending `*`, and
+  keep the 402 out of shared caches.
+
+Omitting the expose list produces a 402 whose price the client cannot read.
+Omitting the allow list produces a payment the client cannot send. Both
+surface to the client as a parse failure on an apparently empty challenge,
+so neither is diagnosable from the client side alone.
+
+A resource server MAY instead refuse browser origins on a paid route. This is
+a choice about who may call the resource, not a payment control: CORS governs
+whether a page may read a response, while the decision to spend belongs to
+whatever holds the payer's signing key. Refusing browser origins prevents
+*that server* from receiving an unintended payment; it does not prevent the
+payment from being made elsewhere.
+
 ## Response Body
 
 Response bodies are a server implementation concern. All x402 protocol information is communicated through headers (`PAYMENT-REQUIRED`, `PAYMENT-SIGNATURE`, `PAYMENT-RESPONSE`). 
