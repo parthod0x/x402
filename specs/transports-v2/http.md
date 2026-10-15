@@ -185,9 +185,12 @@ A resource server intended to be reachable from a browser SHOULD:
   `Access-Control-Expose-Headers`, merged with any value already present
   rather than replacing it. A value of `*` does not cover them on a
   credentialed request;
-- name `PAYMENT-SIGNATURE` in `Access-Control-Allow-Headers`. A value of `*`
-  does not cover it on a credentialed request either, where `*` is read as a
-  literal header name;
+- name `PAYMENT-SIGNATURE` in `Access-Control-Allow-Headers`, alongside
+  `Content-Type`. A value of `*` does not cover either on a credentialed
+  request, where `*` is read as a literal header name. `Content-Type` is
+  safelisted only for form and plain-text values, so a payment request with
+  a JSON body triggers the preflight on `Content-Type` before any payment
+  header is considered: omit it and the client never reaches the 402 at all;
 - name the v1 spellings `X-PAYMENT` and `X-PAYMENT-RESPONSE` alongside the v2
   names in both lists, if it still serves v1 clients. A dual-version endpoint
   that lists only one spelling fails the same way for the other version's
