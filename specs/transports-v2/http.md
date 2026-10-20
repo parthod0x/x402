@@ -186,11 +186,12 @@ A resource server intended to be reachable from a browser SHOULD:
   rather than replacing it. A value of `*` does not cover them on a
   credentialed request;
 - name `PAYMENT-SIGNATURE` in `Access-Control-Allow-Headers`, alongside
-  `Content-Type`. A value of `*` does not cover either on a credentialed
-  request, where `*` is read as a literal header name. `Content-Type` is
-  safelisted only for form and plain-text values, so a payment request with
-  a JSON body triggers the preflight on `Content-Type` before any payment
-  header is considered: omit it and the client never reaches the 402 at all;
+  `Content-Type` when requests carry a body. A value of `*` does not cover
+  either on a credentialed request, where `*` is read as a literal header
+  name. `Content-Type` is safelisted only for form and plain-text values, so
+  a payment request with a JSON body triggers the preflight on
+  `Content-Type` before any payment header is considered: omit it and the
+  client never reaches the 402 at all;
 - name the v1 spellings too, if it still serves v1 clients, each in the list
   matching its direction: `X-PAYMENT` in `Access-Control-Allow-Headers`
   beside `PAYMENT-SIGNATURE`, since the client sends it, and
@@ -204,10 +205,23 @@ A resource server intended to be reachable from a browser SHOULD:
 - send `Vary: Origin` if it reflects an origin rather than sending `*`, and
   keep the 402 out of shared caches.
 
-Omitting the expose list produces a 402 whose price the client cannot read.
-Omitting the allow list produces a payment the client cannot send. Both
-surface to the client as a parse failure on an apparently empty challenge,
-so neither is diagnosable from the client side alone.
+Omitting the expose list produces a 402 whose price the client cannot read:
+the response arrives, the header is hidden, and the client reports a parse
+failure on an apparently empty challenge. Omitting the allow list produces a
+payment the client cannot send: the browser refuses the retry at the
+preflight and reports a network error with no status at all. Neither
+message names CORS, and an unpaid probe with `curl` passes either way, so
+neither is diagnosable from the client side alone.
+
+A preflight should be tested against the request the client's SDK actually
+sends, not against the three headers above. Clients have added request
+headers of their own - a release of the TypeScript clients put
+`Access-Control-Expose-Headers`, a response-only directive, on the paid
+retry - and a browser lists every non-safelisted name it finds in
+`Access-Control-Request-Headers`, so an allow list naming exactly the
+protocol headers refuses that retry while every check in this section
+passes. That is a client defect, to be fixed in the client; it is recorded
+here because the failure appears on the server, as a refused preflight.
 
 A resource server MAY instead refuse browser origins on a paid route. This is
 a choice about who may call the resource, not a payment control: CORS governs
