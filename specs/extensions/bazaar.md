@@ -248,15 +248,21 @@ The `info.input` object uses a discriminated union type, distinguished by the `t
 
 The `info.input` object describes how to call the endpoint or tool.
 
-`info.input` describes the resource, not the request that discovered it. A
-server MUST emit the same `info.input` for a resource regardless of the
-method, headers or body of the request it is answering: a catalog built from
-a `GET` probe and one built from a `POST` probe of the same URL MUST contain
-the same declaration. The declared `method` is the method the resource
-accepts, so a route that answers 402 on any method MUST derive the declared
-method from the route or the declaration, never from the probing request. A
-declaration that varies with the probe indexes, for some probers, an entry no
-client can execute.
+`info.input` describes the resource, not the payment or discovery request
+that discovered it. Its shape - `type`, `method`, whether `bodyType` and
+`body` are present, and the set of example fields - MUST be the same
+regardless of the method, headers or body of the request being answered: a
+catalog built from a `GET` probe and one built from a `POST` probe of the
+same URL MUST contain the same declaration. The declared `method` is the
+method the resource accepts, so a route that answers 402 on any method MUST
+derive it from the route or the declaration, never from the probing request.
+A declaration that varies with the probe indexes, for some probers, an entry
+no client can execute.
+
+Example *values* that are specific to the URL requested are the one exception:
+`pathParams` on a `routeTemplate` route carries the concrete parameter values
+of the request being answered (see *Dynamic Routes and `routeTemplate`*) and
+MAY differ between requests. The shape around them MUST NOT.
 
 #### Query Parameter Methods (GET, HEAD, DELETE)
 
